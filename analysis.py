@@ -1,49 +1,16 @@
-"""
-analysis.py
-
-Aerodynamic analysis utilities for the Wind Tunnel Analyzer project.
-
-Calculate lift and solve for angle of attack using a linear lift model.
-"""
+"""Lift calculations and angle-of-attack solver."""
 
 import numpy as np
 from scipy.optimize import fsolve
 
 
 def compute_cl(alpha, cl0=0.10, lift_slope=0.11):
-    """
-    Compute lift coefficient using a linear lift model.
-
-    Parameters
-    ----------
-    alpha : float
-        Angle of attack in degrees.
-    cl0 : float, optional
-        Lift coefficient at zero angle of attack.
-    lift_slope : float, optional
-        Lift curve slope in units of 1/degree.
-
-    Returns
-    -------
-    float
-        Lift coefficient.
-    """
+    """Return CL; alpha is in degrees and lift_slope is per degree."""
     return cl0 + lift_slope * alpha
 
 
 def print_lift_summary(alpha, cl0=0.10, lift_slope=0.11):
-    """
-    Print a simple summary of the lift coefficient for a given angle of attack.
-
-    Parameters
-    ----------
-    alpha : float
-        Angle of attack in degrees.
-    cl0 : float, optional
-        Lift coefficient at zero angle of attack.
-    lift_slope : float, optional
-        Lift curve slope in units of 1/degree.
-    """
+    """Print alpha in degrees and its lift coefficient."""
     cl = compute_cl(alpha, cl0=cl0, lift_slope=lift_slope)
 
     print("Wind Tunnel Analyzer")
@@ -53,16 +20,12 @@ def print_lift_summary(alpha, cl0=0.10, lift_slope=0.11):
 
 
 def alpha_residual(alpha, target_cl, cl0=0.10, lift_slope=0.11):
-    """Return the difference between the model and target lift coefficients."""
+    """Return model CL minus target CL."""
     return compute_cl(alpha, cl0=cl0, lift_slope=lift_slope) - target_cl
 
 
 def solve_alpha(target_cl, cl0=0.10, lift_slope=0.11, initial_guess=0.0):
-    """Find angle of attack in degrees for the requested lift coefficient.
-
-    The lift slope is in 1/degree. This inverts the linear model, which
-    does not describe stall or select a branch of the experimental curve.
-    """
+    """Find alpha in degrees using the linear, pre-stall lift model."""
     parameters = np.array([target_cl, cl0, lift_slope, initial_guess], dtype=float)
     if not np.all(np.isfinite(parameters)):
         raise ValueError("The target, model parameters, and guess must be finite.")
@@ -81,7 +44,7 @@ def solve_alpha(target_cl, cl0=0.10, lift_slope=0.11, initial_guess=0.0):
 
     alpha = float(root[0])
     residual = float(alpha_residual(alpha, target_cl, cl0, lift_slope))
-    # A reported root still has to satisfy the equation being solved.
+    # Check the root against the lift equation.
     if not np.isfinite(alpha) or not np.isfinite(residual) or abs(residual) > 1e-8:
         raise RuntimeError("The angle solver returned an unacceptable residual.")
     return alpha

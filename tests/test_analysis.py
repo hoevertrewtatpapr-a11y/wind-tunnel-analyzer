@@ -1,4 +1,4 @@
-"""Check the solver against the independent algebraic solution."""
+"""Tests for the lift solver."""
 
 from pathlib import Path
 import sys

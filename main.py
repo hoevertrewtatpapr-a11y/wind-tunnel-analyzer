@@ -1,13 +1,4 @@
-"""
-main.py
-
-Entry point for the Wind Tunnel Analyzer project.
-
-This script loads experimental wind tunnel data, generates basic plots,
-and evaluates the current linear lift model. If the angle-of-attack solver
-has been implemented in analysis.py, the script will also compute the
-angle of attack required to achieve a target lift coefficient.
-"""
+"""Load test data, plot the curves, and solve for angle of attack."""
 
 from pathlib import Path
 
@@ -23,7 +14,7 @@ LIFT_SLOPE = 0.11
 
 
 def main():
-    """Run the Wind Tunnel Analyzer workflow."""
+    """Run the analysis."""
 
     cl0 = CL0
     lift_slope = LIFT_SLOPE
@@ -45,7 +36,7 @@ def main():
 
 
 def load_data(filepath):
-    """Load wind tunnel data from a CSV file using Pandas."""
+    """Read the CSV and check its columns."""
     df = pd.read_csv(filepath)
 
     required_columns = {"alpha_deg", "cl", "cd"}
@@ -59,7 +50,7 @@ def load_data(filepath):
 
 
 def print_data_summary(df):
-    """Print a brief summary of the loaded dataset."""
+    """Print the data ranges and first five rows."""
     print("Wind Tunnel Analyzer")
     print("--------------------")
     print(f"Number of data points: {len(df)}")
@@ -81,7 +72,7 @@ def print_data_summary(df):
 
 
 def plot_lift_curve(df, cl0=CL0, lift_slope=LIFT_SLOPE):
-    """Plot experimental CL vs alpha data and overlay the linear lift model."""
+    """Plot measured CL and the linear model."""
     alpha_data = df["alpha_deg"]
     cl_data = df["cl"]
 
@@ -100,7 +91,7 @@ def plot_lift_curve(df, cl0=CL0, lift_slope=LIFT_SLOPE):
 
 
 def plot_drag_curve(df):
-    """Plot experimental CD vs alpha data."""
+    """Plot measured CD against alpha."""
     plt.figure(figsize=(8, 5))
     plt.plot(df["alpha_deg"], df["cd"], "o-")
     plt.xlabel("Angle of attack, α (deg)")
