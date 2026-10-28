@@ -17,23 +17,29 @@ import pandas as pd
 from analysis import compute_cl, solve_alpha
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_FILE = BASE_DIR / "data" / "test.csv"
+DATA_FILE = BASE_DIR / "data" / "test1.csv"
+CL0 = 0.10
+LIFT_SLOPE = 0.11
+
 
 def main():
     """Run the Wind Tunnel Analyzer workflow."""
 
-    cl0 = 0.10
-    lift_slope = 0.11
+    cl0 = CL0
+    lift_slope = LIFT_SLOPE
+    target_cl = 0.80
 
     df = load_data(DATA_FILE)
     print_data_summary(df)
-    plot_lift_curve(df)
+    plot_lift_curve(df, cl0=cl0, lift_slope=lift_slope)
     plot_drag_curve(df)
 
-    # TODO:
-    # Add code to compute the angle of attack required to achieve
-    # a target lift coefficient using solve_alpha(...).
-    # Print the result to the console.
+    alpha = solve_alpha(target_cl, cl0=cl0, lift_slope=lift_slope)
+    achieved_cl = compute_cl(alpha, cl0=cl0, lift_slope=lift_slope)
+    print(f"Target lift coefficient: {target_cl:.3f}")
+    print(f"Required angle of attack: {alpha:.6f} deg")
+    print(f"Model lift coefficient: {achieved_cl:.6f}")
+    print(f"Lift coefficient residual: {achieved_cl - target_cl:.2e}")
 
     plt.show()
 
@@ -84,7 +90,7 @@ def plot_lift_curve(df, cl0=CL0, lift_slope=LIFT_SLOPE):
 
     plt.figure(figsize=(8, 5))
     plt.plot(alpha_data, cl_data, "o", label="Experimental data")
-    plt.plot(alpha_model, cl_model, "-", label="Linear lift model")
+    plt.plot(alpha_model, cl_model, "-", label="Linear lift model (no stall)")
     plt.xlabel("Angle of attack, α (deg)")
     plt.ylabel("Lift coefficient, $C_L$")
     plt.title("Lift Curve")
@@ -104,5 +110,6 @@ def plot_drag_curve(df):
     plt.tight_layout()
 
 
-main()
-print("main.py ran successfully")
+if __name__ == "__main__":
+    main()
+    print("main.py ran successfully")

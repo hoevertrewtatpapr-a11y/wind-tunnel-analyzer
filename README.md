@@ -11,7 +11,7 @@ This repository is part of AeroLab Dynamics computational toolkit. The **Wind Tu
 ```text
 wind-tunnel-analyzer/
 ├── data/             # Data folder
-│   └── test.csv      # Spreadsheet of collected data
+│   └── test1.csv     # Spreadsheet of collected data
 ├── main.py           # Entry point for running the analysis
 ├── analysis.py       # Aerodynamic calculations and solver functions
 ├── README.md         # Project documentation
@@ -92,7 +92,7 @@ $$
 
 While effective in simple cases, these approaches rely on manual estimation or algebraic manipulation.
 
-### Automated approach (New feature to be implemented)
+### Automated approach
 
 To support a more consistent and extensible analysis workflow, the tool is being extended to compute the required angle of attack numerically.
 
@@ -108,4 +108,33 @@ $$
 f(\alpha) = 0  
 $$
 
-This approach allows the use of numerical root-finding methods (e.g., `scipy.optimize.fsolve`) and provides a unified framework that can be extended to more complex, nonlinear aerodynamic models.
+`analysis.solve_alpha` uses `scipy.optimize.fsolve` to find this root. It
+checks the convergence flag and the residual before returning the angle
+in degrees. A zero lift slope is rejected because it cannot give a unique
+angle. The linear model is intended for pre-stall conditions; it does not
+fit the measured data or describe the post-stall curve.
+
+For the demonstration target $C_L=0.80$, with $C_{L0}=0.10$ and
+$a=0.11$ per degree, the required angle is **6.363636 degrees**.
+
+## Run the project
+
+Create the environment from `environment.yml`, or install NumPy, SciPy,
+Matplotlib, and Pandas in your existing environment. From the project folder:
+
+```bash
+python main.py
+python -m unittest discover -s tests -v
+```
+
+When the project folder is next to the homework notebook, its existing cell
+also runs the script:
+
+```python
+%run wind-tunnel-analyzer/main.py
+```
+
+Change `target_cl` in `main()` to analyze another target. The script prints
+the required angle and the lift check, and displays the experimental lift
+and drag curves. Data paths are relative to `main.py`, so running it from
+the notebook does not depend on the current working directory.

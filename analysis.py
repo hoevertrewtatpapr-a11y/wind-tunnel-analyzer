@@ -3,11 +3,10 @@ analysis.py
 
 Aerodynamic analysis utilities for the Wind Tunnel Analyzer project.
 
-This module currently supports simple calculations based on a linear
-lift-curve model. Numerical solver support for finding angle of attack
-from a target lift coefficient is planned but not yet implemented.
+Calculate lift and solve for angle of attack using a linear lift model.
 """
 
+import numpy as np
 from scipy.optimize import fsolve
 
 
@@ -53,15 +52,36 @@ def print_lift_summary(alpha, cl0=0.10, lift_slope=0.11):
     print(f"Lift coefficient: {cl:.3f}")
 
 
-# TODO:
-# Add a numerical solver that computes angle of attack from a target
-# lift coefficient using scipy.optimize.fsolve.
-#
-# Planned residual form:
-#     f(alpha) = cl0 + lift_slope * alpha - target_cl
-#
-# Possible function names:
-#     alpha_residual(...)
-#     solve_alpha(...)
-#
-# This feature has not been implemented yet.
+def alpha_residual(alpha, target_cl, cl0=0.10, lift_slope=0.11):
+    """Return the difference between the model and target lift coefficients."""
+    return compute_cl(alpha, cl0=cl0, lift_slope=lift_slope) - target_cl
+
+
+def solve_alpha(target_cl, cl0=0.10, lift_slope=0.11, initial_guess=0.0):
+    """Find angle of attack in degrees for the requested lift coefficient.
+
+    The lift slope is in 1/degree. This inverts the linear model, which
+    does not describe stall or select a branch of the experimental curve.
+    """
+    parameters = np.array([target_cl, cl0, lift_slope, initial_guess], dtype=float)
+    if not np.all(np.isfinite(parameters)):
+        raise ValueError("The target, model parameters, and guess must be finite.")
+    if lift_slope == 0:
+        raise ValueError("A nonzero lift slope is needed for a unique angle.")
+
+    root, info, ier, message = fsolve(
+        alpha_residual,
+        x0=initial_guess,
+        args=(target_cl, cl0, lift_slope),
+        full_output=True,
+        xtol=1e-10,
+    )
+    if ier != 1:
+        raise RuntimeError(f"The angle solver did not converge: {message.strip()}")
+
+    alpha = float(root[0])
+    residual = float(alpha_residual(alpha, target_cl, cl0, lift_slope))
+    # A reported root still has to satisfy the equation being solved.
+    if not np.isfinite(alpha) or not np.isfinite(residual) or abs(residual) > 1e-8:
+        raise RuntimeError("The angle solver returned an unacceptable residual.")
+    return alpha
